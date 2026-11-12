@@ -1,0 +1,9 @@
+build/
+.cache/
+*.class
+*.jar
+*.apk
+*.dex
+local.properties
+.idea/
+.DS_Store
