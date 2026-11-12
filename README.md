@@ -21,7 +21,7 @@
 | --- | --- |
 | 壳（`ComponentManager` / `ShellUi` / `Http` / `ComponentState` / `Signer`） | ✅ MIT |
 | 组件接口 `com.jiyan.cloud.spi.Component` | ✅ |
-| 组件协议（manifest / url / report、HMAC 签名、ECDSA 校验） | ✅ |
+| 组件协议（manifest / url / report、ECDSA 校验；HMAC 请求签名已预留） | ✅ |
 | 后台发布页、数据库、服务端 | ❌ 闭源 |
 | 业务组件（卡密、云控、注入等） | ❌ 不在本仓库 |
 
@@ -35,10 +35,10 @@ merge → 用户启动 → 壳读配置 → 取 manifest
                                               → 失败回退上一版（最多 3 次）
 ```
 
-- 组件包由后台用 ECDSA P-256 私钥签名，壳内置公钥校验；公钥不是秘密。
+- 组件包由后台用 ECDSA P-256 私钥签名，壳内置公钥校验；**签名缺失或校验失败一律拒绝安装**（v1.0.1 起），公钥不是秘密。
 - 下载地址是一次性票据（绑定设备、15 分钟过期），支持 Range 断点续传。
 - `state.json` 原子写入（tmp + rename），记录 active / previous / badVersion。
-- 首次安装组件后提示重启一次；后续更新在下次启动或热切换时生效。
+- 首次安装直接加载组件；后续更新在下次启动或热切换时生效，热切换失败会提示重启。
 
 ## 目录
 

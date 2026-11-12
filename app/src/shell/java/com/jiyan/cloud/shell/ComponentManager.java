@@ -59,6 +59,7 @@ public final class ComponentManager {
 
     public static synchronized void start(Context c, String data, String iv) {
         if (INSTANCE != null) return;
+        ShellLog.init(c);
         INSTANCE = new ComponentManager(c);
         final ComponentManager self = INSTANCE;
         final String d = data;
@@ -543,9 +544,9 @@ public final class ComponentManager {
             if (part.length() != size) throw new IOException("大小不符");
             String got = ComponentState.sha256(part);
             if (!got.equalsIgnoreCase(sha)) throw new IOException("SHA-256 校验失败");
-            if (!sig.isEmpty() && !verify(part, sig)) {
-                ShellLog.w("Comp", "组件文件签名未通过，但 SHA-256 已匹配，继续安装");
-            }
+            // 安全要求：签名缺失或校验失败都必须拒绝安装，不能只看 SHA-256。
+            if (sig.isEmpty()) throw new IOException("组件签名缺失");
+            if (!verify(part, sig)) throw new IOException("组件签名验证失败");
 
             File dex = ComponentState.dexFor(ctx, version);
             if (dex.exists() && !dex.delete()) throw new IOException("旧组件删除失败");

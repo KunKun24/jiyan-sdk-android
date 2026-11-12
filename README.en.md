@@ -21,7 +21,7 @@ download, verification, hot swap and rollback, while business code and UI live i
 | --- | --- |
 | Shell (`ComponentManager`, `ShellUi`, `Http`, `ComponentState`, `Signer`) | ✅ MIT |
 | `com.jiyan.cloud.spi.Component` | ✅ |
-| Component protocol (manifest / url / report, HMAC, ECDSA) | ✅ |
+| Component protocol (manifest / url / report, ECDSA; HMAC request signing reserved) | ✅ |
 | Backend release page, database, server | ❌ |
 | Business components (cards, cloud control, injection) | ❌ |
 
@@ -35,12 +35,12 @@ merge → launch → read config → fetch manifest
                                             → DexClassLoader → fallback on failure (max 3)
 ```
 
-- Components are signed with an ECDSA P-256 private key held by the backend;
+- Components are signed with an ECDSA P-256 private key held by the backend; missing or invalid signatures are rejected (v1.0.1+);
   the shell embeds only the public key.
 - Download URLs are one-time tickets bound to a device, valid for 15 minutes,
   with HTTP Range resume.
 - `state.json` is written atomically; it stores active / previous / badVersion.
-- The first component install asks for one restart; later updates hot-swap.
+- The first install loads the component directly; later updates hot-swap, with a restart prompt only on failure.
 
 ## Layout
 

@@ -27,7 +27,7 @@ The shell uses `Dialog`, `Notification`, `DexClassLoader`, and `Settings.Secure`
 
 A component over 4 MB may be rejected by the server on upload or delivery. The client does not raise a separate "too large" error; it reports "size mismatch" or "SHA-256 verification failed" only when the values disagree. Large assets also lengthen download and verification, so host them on your own CDN instead.
 
-The shell and component are loaded by different `DexClassLoader` instances and cannot reference each other's classes, except for `com.jiyan.cloud.spi.Component`. If a component needs native code, it must extract and `System.load` the library itself after `init`. The shell does not continue cloud-update downloads in the same launch; the shell reserves a `pending_restart` marker, but no reachable path writes it today, so cross-restart work still needs component-side handling.
+The shell and component are loaded by different `DexClassLoader` instances and must not reference each other's classes, except for `com.jiyan.cloud.spi.Component`. If a component needs native code, it must extract and `System.load` the library itself. The shell does not continue cloud-update downloads in the same launch; the shell reserves a `pending_restart` marker, but no reachable path writes it today, so cross-restart work still needs component-side handling.
 
 ## Multiple Apps
 
@@ -38,6 +38,8 @@ The shell and component are loaded by different `DexClassLoader` instances and c
 | Isolation | Each host package has its own `filesDir`, `state.json`, and component directory |
 | Device identity | Hosts on one device share `ANDROID_ID` |
 | Keys | Each `app_id` has its own `sign_key` / `encryption_key` |
+
+The decrypted config is an excerpt below:
 
 ```json
 {

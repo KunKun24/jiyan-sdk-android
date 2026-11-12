@@ -12,14 +12,14 @@
 | 构建工具 | `javac` + `d8`，或等价的自建脚本 |
 | 运行时依赖 | 无 AndroidX、无第三方库；`org.json` 由 Android 提供 |
 | 组件大小 | 建议不超过 4 MB（服务端默认上限） |
-| 组件入口 | 默认 `com.jiyan.cloud.comp.ComponentImpl` |
+| 组件入口 | 固定 `com.jiyan.cloud.comp.ComponentImpl` |
 
 ## 接入步骤
 
 1. 把 `app/src/shell/java` 整个复制进宿主工程，保持包名 `com.jiyan.cloud` 与 `com.jiyan.cloud.shell` 不变。
 2. 保持 `Cloud.java` 的公开方法签名不变，宿主启动时传入后台生成的 `data` / `iv` 并调用 `init`。
 3. 业务代码放在独立 source set 或独立 module，编译成 `component.dex`，不要与壳重复打包同一批类。
-4. 组件入口实现 `com.jiyan.cloud.spi.Component`，类名默认 `com.jiyan.cloud.comp.ComponentImpl`，必须是 `public`、有无参构造函数。
+4. 组件入口实现 `com.jiyan.cloud.spi.Component`，类名固定为 `com.jiyan.cloud.comp.ComponentImpl`，必须是 `public`、有无参构造函数。
 5. 组件用后台私钥签名、上传并发布版本；壳从清单取 `component_url` 后下载。
 6. 合并最终宿主 DEX：宿主仍只交付一个 DEX，组件由 `DexClassLoader` 从 `components/vN/classes.dex` 加载。
 
@@ -71,7 +71,7 @@ public final class ComponentImpl implements Component {
 | 已加载过组件，热切换成功 | 调用旧组件 `shutdown()`，新建 `DexClassLoader` 加载新组件，不重启 |
 | 热切换失败，或安装发生在非启动路径 | 弹出“组件库已就绪”要求重启；`pending_restart` 只在非启动分支写入，而 `bootLoad` 恒为 true，该分支当前不可达 |
 
-需要重启的原因是：旧组件的类已经由前一个 `DexClassLoader` 加载，进程内无法真正卸载；组件后续要下载的 `.so` 也约定由“重启后接管的新组件”自己完成，壳不在同一次启动里继续下载云更新文件。`pending_restart` 的格式是 `<pid>|<组件版本>|<毫秒时间戳>`，由组件在入口处消费。
+需要重启的原因是：首次安装要让组件在下次启动时从入口接管界面；热切换失败则是因为旧组件的类已由前一个 `DexClassLoader` 加载，进程内无法真正卸载；组件后续要下载的 `.so` 也约定由“重启后接管的新组件”自己完成。`pending_restart` 的格式是 `<pid>|<组件版本>|<毫秒时间戳>`，由组件在入口处消费。
 
 > README 写“首次安装组件后提示重启一次”，但当前启动预取路径会直接加载、不提示重启。两种分支都在源码中，以实际代码路径为准。
 

@@ -12,14 +12,14 @@ This guide wires the JiYan Cloud Android shell into a host app and gets the firs
 | Toolchain | `javac` + `d8`, or an equivalent custom build step |
 | Runtime deps | No AndroidX or third-party libraries; `org.json` comes from Android |
 | Component size | 4 MB or less is recommended (server-side default) |
-| Component entry | `com.jiyan.cloud.comp.ComponentImpl` by default |
+| Component entry | Fixed to `com.jiyan.cloud.comp.ComponentImpl` |
 
 ## Integration Steps
 
 1. Copy `app/src/shell/java` into the host app and keep the `com.jiyan.cloud` and `com.jiyan.cloud.shell` package names unchanged.
 2. Keep the public method signatures of `Cloud.java` unchanged. Pass the server-generated `data` / `iv` at startup and call `init`.
 3. Put business code in a separate source set or module and compile it into `component.dex`. Do not ship the same classes in both the shell and the component.
-4. Implement `com.jiyan.cloud.spi.Component`. The default class is `com.jiyan.cloud.comp.ComponentImpl`; it must be `public` and have a no-argument constructor.
+4. Implement `com.jiyan.cloud.spi.Component`. The class is fixed to `com.jiyan.cloud.comp.ComponentImpl`; it must be `public` and have a no-argument constructor.
 5. Sign the component with the server-side private key, upload it, and publish a version. The shell downloads it from the URL returned by `component_url`.
 6. Merge the final host DEX. The host still ships one DEX; the component is loaded at runtime by `DexClassLoader` from `components/vN/classes.dex`.
 
@@ -72,7 +72,7 @@ At startup the shell fetches the manifest once with short timeouts. If a version
 | Component already loaded, hot swap succeeds | The old component gets `shutdown()`, a new `DexClassLoader` loads the new component, no restart |
 | Hot swap fails, or installation runs outside the startup path | Shows "component library ready" and asks for a restart; `pending_restart` is written only in the non-boot branch, which is unreachable today because `bootLoad` is always true |
 
-A restart is needed because classes from the previous component are already loaded by the old `DexClassLoader` and cannot be unloaded in-process. Native libraries that the component wants to download are also expected to be handled by the new component after restart; the shell does not continue downloading cloud-update files in the same launch. The marker format is `<pid>|<component version>|<epoch millis>` and is consumed by the component at its entry point.
+A restart lets a first install take over the UI from the process entry point. After a failed hot swap, classes from the previous component are already loaded by the old `DexClassLoader` and cannot be unloaded in-process. Native libraries that the component wants to download are also expected to be handled by the new component after restart; the shell does not continue downloading cloud-update files in the same launch. The marker format is `<pid>|<component version>|<epoch millis>` and is consumed by the component at its entry point.
 
 > The README says the first install asks for one restart, but the current startup prefetch path loads the component directly without prompting. Both branches exist in the source; the actual code path is authoritative.
 
